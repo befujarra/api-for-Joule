@@ -1,0 +1,386 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Margin Analysis API",
+    "description": "API OData (SAP CAP) para análise de margem bruta por material, consumindo dados do SAP S/4HANA Cloud (Billing, GL Account, e Journal Entries). Esta API é focada em prover dados contextuais financeiros e métricas para inteligência artificial (Agents).",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4004",
+      "description": "Servidor Local"
+    }
+  ],
+  "paths": {
+    "/margin-analysis/analyze": {
+      "get": {
+        "summary": "Retorna a Análise de Margem Bruta",
+        "description": "Dispara o pipeline de coleta paralela na SAP, cruza e normaliza receitas e custos indiretos, calcula KPIs unitários e gera contexto histórico embutido.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Filtra pelo ID do Material."
+          },
+          {
+            "in": "query",
+            "name": "periodStart",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Filtra pela data ou período de início (Ex: 2024-01)."
+          },
+          {
+            "in": "query",
+            "name": "periodEnd",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Filtra pela data ou período de fim."
+          },
+          {
+            "in": "query",
+            "name": "plant",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Filtra por Planta (Centro de Distribuição / Fábrica)."
+          },
+          {
+            "in": "query",
+            "name": "mock",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "required": false,
+            "description": "Opcional. Se true, a API bypassa as chamadas para a SAP e retorna instantaneamente um payload simulado, útil para testes e montagem de interface."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Análise executada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao tentar consumir as APIs SAP ou processar o JSON."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "schemas": {
+      "AnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "@odata.context": {
+            "type": "string",
+            "example": "$metadata#MarginAnalysisService.AnalysisResponse"
+          },
+          "analysisDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-03-06"
+          },
+          "analysisType": {
+            "type": "string",
+            "example": "Gross Margin Analysis"
+          },
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "totalMaterials": {
+            "type": "integer",
+            "example": 1
+          },
+          "materials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarginResult"
+            }
+          }
+        }
+      },
+      "MarginResult": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string",
+            "example": "TG11"
+          },
+          "classification": {
+            "type": "string",
+            "example": "Low Profitability"
+          },
+          "dimensions": {
+            "$ref": "#/components/schemas/Dimensions"
+          },
+          "glContext": {
+            "$ref": "#/components/schemas/GLContext"
+          },
+          "fiscalContext": {
+            "$ref": "#/components/schemas/FiscalContext"
+          },
+          "productContext": {
+            "$ref": "#/components/schemas/ProductContext"
+          },
+          "currencyContext": {
+            "$ref": "#/components/schemas/CurrencyContext"
+          },
+          "salesContext": {
+            "$ref": "#/components/schemas/SalesContext"
+          },
+          "documentContext": {
+            "$ref": "#/components/schemas/DocumentContext"
+          },
+          "currentPeriod": {
+            "$ref": "#/components/schemas/CurrentPeriod"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryRecord"
+            }
+          },
+          "revenueBreakdown": {
+            "$ref": "#/components/schemas/RevenueBreakdown"
+          },
+          "costBreakdown": {
+            "$ref": "#/components/schemas/CostBreakdown"
+          },
+          "accountBreakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountBreakdownItem"
+            }
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/Metrics"
+          }
+        }
+      },
+      "Dimensions": {
+        "type": "object",
+        "properties": {
+          "companyCode": { "type": "string" },
+          "plant": { "type": "string" },
+          "profitCenter": { "type": "string" },
+          "costCenter": { "type": "string" },
+          "segment": { "type": "string" },
+          "functionalArea": { "type": "string" }
+        }
+      },
+      "FiscalContext": {
+        "type": "object",
+        "properties": {
+          "fiscalYear": { "type": "string" },
+          "fiscalPeriod": { "type": "string" },
+          "fiscalYearPeriod": { "type": "string" },
+          "postingDate": { "type": "string" },
+          "documentDate": { "type": "string" }
+        }
+      },
+      "DocumentContext": {
+        "type": "object",
+        "properties": {
+          "accountingDocument": { "type": "string" },
+          "sourceReferenceDocument": { "type": "string" },
+          "referenceDocumentType": { "type": "string" }
+        }
+      },
+      "GLContext": {
+        "type": "object",
+        "properties": {
+          "ledger": { "type": "string" },
+          "ledgerFiscalYear": { "type": "string" },
+          "chartOfAccounts": { "type": "string" },
+          "glAccountType": { "type": "string" }
+        }
+      },
+      "ProductContext": {
+        "type": "object",
+        "properties": {
+          "product": { "type": "string" },
+          "baseUnit": { "type": "string" },
+          "plant": { "type": "string" }
+        }
+      },
+      "CurrencyContext": {
+        "type": "object",
+        "properties": {
+          "transactionCurrency": { "type": "string" },
+          "companyCodeCurrency": { "type": "string" },
+          "globalCurrency": { "type": "string" }
+        }
+      },
+      "SalesContext": {
+        "type": "object",
+        "properties": {
+          "salesOrganization": { "type": "string" },
+          "distributionChannel": { "type": "string" },
+          "billingDocuments": { "type": "integer" },
+          "averagePrice": { "type": "number" }
+        }
+      },
+      "AccountBreakdownItem": {
+        "type": "object",
+        "properties": {
+          "glAccount": { "type": "string" },
+          "glAccountType": { "type": "string" },
+          "amount": { "type": "number" },
+          "category": { "type": "string" },
+          "offsettingAccount": { "type": "string" },
+          "businessTransactionType": { "type": "string" },
+          "fiscalYear": { "type": "string" },
+          "fiscalPeriod": { "type": "string" },
+          "postingDate": { "type": "string" },
+          "profitCenter": { "type": "string" },
+          "costCenter": { "type": "string" },
+          "product": { "type": "string" },
+          "ledger": { "type": "string" }
+        }
+      },
+      "CurrentPeriod": {
+        "type": "object",
+        "properties": {
+          "quantitySold": {
+            "type": "number",
+            "format": "double",
+            "example": 121
+          },
+          "baseUnit": {
+            "type": "string"
+          },
+          "valuationQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "revenue": {
+            "type": "number",
+            "format": "double",
+            "example": 2123.55
+          },
+          "cost": {
+            "type": "number",
+            "format": "double",
+            "example": 2163.92
+          },
+          "grossMargin": {
+            "type": "number",
+            "format": "double",
+            "example": -40.37
+          },
+          "grossMarginPercent": {
+            "type": "number",
+            "format": "double",
+            "example": -1.9
+          }
+        }
+      },
+      "HistoryRecord": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "example": "2026-01"
+          },
+          "revenue": {
+            "type": "number",
+            "format": "double",
+            "example": 1800
+          },
+          "cost": {
+            "type": "number",
+            "format": "double",
+            "example": 1200
+          },
+          "marginPercent": {
+            "type": "number",
+            "format": "double",
+            "example": 33.3
+          }
+        }
+      },
+      "RevenueBreakdown": {
+        "type": "object",
+        "properties": {
+          "billingDocuments": {
+            "type": "integer",
+            "example": 4
+          },
+          "averagePrice": {
+            "type": "number",
+            "format": "double",
+            "example": 17.54
+          }
+        }
+      },
+      "CostBreakdown": {
+        "type": "object",
+        "properties": {
+          "materialCost": {
+            "type": "number",
+            "format": "double",
+            "example": 1200
+          },
+          "overheadCost": {
+            "type": "number",
+            "format": "double",
+            "example": 600
+          },
+          "logisticsCost": {
+            "type": "number",
+            "format": "double",
+            "example": 363.92
+          }
+        }
+      },
+      "Metrics": {
+        "type": "object",
+        "properties": {
+          "unitRevenue": {
+            "type": "number",
+            "format": "double",
+            "example": 17.54
+          },
+          "unitCost": {
+            "type": "number",
+            "format": "double",
+            "example": 17.88
+          },
+          "unitMargin": {
+            "type": "number",
+            "format": "double",
+            "example": -0.34
+          },
+          "marginTrend": {
+            "type": "string",
+            "example": "decreasing",
+            "description": "Pode possuir o valor 'increasing' ou 'decreasing' baseado na \u0066lutuação histórica."
+          }
+        }
+      }
+    }
+  }
+}
