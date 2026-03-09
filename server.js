@@ -13,7 +13,7 @@ let initPromise;
 
 module.exports = async (req, res) => {
     if (!initPromise) {
-        initPromise = cds.connect().then(() => cds.serve('all').in(app));
+        initPromise = cds.serve('all').in(app);
     }
     await initPromise;
     return app(req, res);
