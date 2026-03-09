@@ -1,5 +1,5 @@
 ### Test the API completely without parameter (fetches ALL materials and calculates)
-GET http://localhost:4004/margin-analysis/analyze
+GET https://api-for-joule-git-main-vinisouza26-8721s-projects.vercel.app/margin-analysis/analyze
 Accept: application/json
 Authorization: Basic alice:alice
 
@@ -7,20 +7,20 @@ Authorization: Basic alice:alice
 
 ### The API has been migrated to a REST-based GET query 
 ### Filtering by Material 'MZ-FG-C990'
-GET http://localhost:4004/margin-analysis/analyze?material=MZ-FG-C990
+GET https://api-for-joule-git-main-vinisouza26-8721s-projects.vercel.app/margin-analysis/analyze?material=MZ-FG-C990
 Accept: application/json
 Authorization: Basic alice:alice
 
 ---
 
 ### Teste Filtrando um Material Específico (TG11)
-GET http://localhost:4004/margin-analysis/analyze?material=TG11
+GET https://api-for-joule-git-main-vinisouza26-8721s-projects.vercel.app/margin-analysis/analyze?material=TG11
 Accept: application/json
 Authorization: Basic alice:alice
 
 ---
 
 ### Mock Mode with multiple filters
-GET http://localhost:4004/margin-analysis/analyze?material=MAT-1000&periodStart=2024-01&periodEnd=2024-06&plant=1000&mock=true
+GET https://api-for-joule-git-main-vinisouza26-8721s-projects.vercel.app/margin-analysis/analyze?material=MAT-1000&periodStart=2024-01&periodEnd=2024-06&plant=1000&mock=true
 Accept: application/json
 Authorization: Basic alice:alice
